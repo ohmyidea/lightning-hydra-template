@@ -128,6 +128,7 @@ The directory structure of new project looks like this:
 ├── .pre-commit-config.yaml   <- Configuration of pre-commit hooks for code formatting
 ├── .project-root             <- File for inferring the position of project root directory
 ├── environment.yaml          <- File for installing conda environment
+├── Justfile                  <- Justfile with commands like `just train` or `just test`
 ├── Makefile                  <- Makefile with commands like `make train` or `make test`
 ├── pyproject.toml            <- Configuration options for testing and linting
 ├── requirements.txt          <- File for installing python dependencies
