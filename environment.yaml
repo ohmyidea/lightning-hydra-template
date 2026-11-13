@@ -43,3 +43,5 @@ dependencies:
       - hydra-optuna-sweeper
       - hydra-colorlog
       - rootutils
+      - rust-just
+      - tensorboard

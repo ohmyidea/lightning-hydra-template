@@ -1,0 +1,238 @@
+# @package _global_
+
+# enable color logging
+defaults:
+  - override /hydra/hydra_logging: colorlog
+  - override /hydra/job_logging: colorlog
+  - _self_
+
+# Shared runtime defaults. experiment/*.yaml overrides task-specific settings.
+trainer:
+  _target_: lightning.pytorch.trainer.Trainer
+  default_root_dir: ${paths.output_dir}
+  min_epochs: 100 # prevents early stopping
+  max_epochs: 200
+  accelerator: gpu
+  devices: 1
+  check_val_every_n_epoch: 1 # perform a validation loop every N training epochs
+  deterministic: false # set true to to ensure deterministic results
+
+  # precision: 16 # mixed precision for extra speed-up
+
+  # Alternative trainer settings (replace the active values above).
+  # Replace the corresponding settings above when selecting an alternative.
+  # For DDP, also add strategy, num_nodes, and sync_batchnorm below.
+
+  # CPU (cpu.yaml)
+  # accelerator: cpu
+  # devices: 1
+
+  # GPU (gpu.yaml)
+  # accelerator: gpu
+  # devices: 1
+
+  # Apple Silicon (mps.yaml)
+  # accelerator: mps
+  # devices: 1
+
+  # Multi-GPU DDP (ddp.yaml)
+  # strategy: ddp
+  # accelerator: gpu
+  # devices: 4
+  # num_nodes: 1
+  # sync_batchnorm: True
+
+  # Simulated DDP (ddp_sim.yaml)
+  # simulate DDP on CPU, useful for debugging
+  # accelerator: cpu
+  # devices: 2
+  # strategy: ddp_spawn
+
+callbacks:
+  # https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.ModelCheckpoint.html
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    dirpath: ${paths.output_dir}/checkpoints # directory to save the model file
+    filename: "epoch_{epoch:03d}" # checkpoint filename
+    monitor: "val/acc" # name of the logged metric which determines when model is improving
+    verbose: False # verbosity mode
+    save_last: True # additionally always save an exact copy of the last checkpoint to a file last.ckpt
+    save_top_k: 1 # save k best models (determined by above metric)
+    mode: "max" # "max" means higher metric value is better, can be also "min"
+    auto_insert_metric_name: False # when True, the checkpoints filenames will contain the metric name
+    save_weights_only: False # if True, then only the model’s weights will be saved
+    every_n_train_steps: null # number of training steps between checkpoints
+    train_time_interval: null # checkpoints are monitored at the specified time interval
+    every_n_epochs: null # number of epochs between checkpoints
+    save_on_train_epoch_end: null # whether to run checkpointing at the end of the training epoch or the end of validation
+
+  # https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.EarlyStopping.html
+  early_stopping:
+    _target_: lightning.pytorch.callbacks.EarlyStopping
+    monitor: "val/acc" # quantity to be monitored, must be specified !!!
+    min_delta: 0. # minimum change in the monitored quantity to qualify as an improvement
+    patience: 100 # number of checks with no improvement after which training will be stopped
+    verbose: False # verbosity mode
+    mode: "max" # "max" means higher metric value is better, can be also "min"
+    strict: True # whether to crash the training if monitor is not found in the validation metrics
+    check_finite: True # when set True, stops training when the monitor becomes NaN or infinite
+    stopping_threshold: null # stop training immediately once the monitored quantity reaches this threshold
+    divergence_threshold: null # stop training as soon as the monitored quantity becomes worse than this threshold
+    check_on_train_epoch_end: null # whether to run early stopping at the end of the training epoch
+    # log_rank_zero_only: False  # this keyword argument isn't available in stable version
+
+  # https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.RichModelSummary.html
+  model_summary:
+    _target_: lightning.pytorch.callbacks.RichModelSummary
+    max_depth: -1 # the maximum depth of layer nesting that the summary will include
+
+  # https://lightning.ai/docs/pytorch/latest/api/lightning.pytorch.callbacks.RichProgressBar.html
+  rich_progress_bar:
+    _target_: lightning.pytorch.callbacks.RichProgressBar
+
+logger:
+  # Uncomment optional logger blocks to enable them alongside TensorBoard.
+  # To train with many loggers at once, enable csv, tensorboard, and wandb.
+
+  # https://www.tensorflow.org/tensorboard/
+  tensorboard:
+    _target_: lightning.pytorch.loggers.tensorboard.TensorBoardLogger
+    save_dir: ${paths.output_dir}/tensorboard/
+    name: null
+    log_graph: false
+    default_hp_metric: true
+    prefix: ""
+    # version: ""
+  
+  # csv logger built in lightning
+  # csv:
+  #   _target_: lightning.pytorch.loggers.csv_logs.CSVLogger
+  #   save_dir: "${paths.output_dir}"
+  #   name: "csv/"
+  #   prefix: ""
+  
+  # https://wandb.ai
+  # wandb:
+  #   _target_: lightning.pytorch.loggers.wandb.WandbLogger
+  #   # name: "" # name of the run (normally generated by wandb)
+  #   save_dir: "${paths.output_dir}"
+  #   offline: false
+  #   id: null # pass correct id to resume experiment!
+  #   anonymous: null # enable anonymous logging
+  #   project: "lightning-hydra-template"
+  #   log_model: false # upload lightning ckpts
+  #   prefix: "" # a string to put at the beginning of metric keys
+  #   # entity: "" # set to name of your wandb team
+  #   group: ""
+  #   tags: []
+  #   job_type: ""
+
+  # https://aimstack.io/
+  #
+  # example usage in lightning module:
+  # https://github.com/aimhubio/aim/blob/main/examples/pytorch_lightning_track.py
+  #
+  # open the Aim UI with the following command (run in the folder containing the `.aim` folder):
+  # `aim up`
+  #
+  # aim:
+  #   _target_: aim.pytorch_lightning.AimLogger
+  #   repo: ${paths.root_dir} # .aim folder will be created here
+  #   # repo: "aim://ip_address:port" # can instead provide IP address pointing to Aim remote tracking server which manages the repo, see https://aimstack.readthedocs.io/en/latest/using/remote_tracking.html#
+  #
+  #   # aim allows to group runs under experiment name
+  #   experiment: null # any string, set to "default" if not specified
+  #
+  #   train_metric_prefix: "train/"
+  #   val_metric_prefix: "val/"
+  #   test_metric_prefix: "test/"
+  #
+  #   # sets the tracking interval in seconds for system usage metrics (CPU, GPU, memory, etc.)
+  #   system_tracking_interval: 10 # set to null to disable system metrics tracking
+  #
+  #   # enable/disable logging of system params such as installed packages, git info, env vars, etc.
+  #   log_system_params: true
+  #
+  #   # enable/disable tracking console logs (default value is true)
+  #   capture_terminal_logs: false # set to false to avoid infinite console log loop issue https://github.com/aimhubio/aim/issues/2550
+
+  # https://www.comet.ml
+  #
+  # comet:
+  #   _target_: lightning.pytorch.loggers.comet.CometLogger
+  #   api_key: ${oc.env:COMET_API_TOKEN} # api key is loaded from environment variable
+  #   save_dir: "${paths.output_dir}"
+  #   project_name: "lightning-hydra-template"
+  #   rest_api_key: null
+  #   # experiment_name: ""
+  #   experiment_key: null # set to resume experiment
+  #   offline: False
+  #   prefix: ""
+
+  # https://mlflow.org
+  #
+  # mlflow:
+  #   _target_: lightning.pytorch.loggers.mlflow.MLFlowLogger
+  #   # experiment_name: ""
+  #   # run_name: ""
+  #   tracking_uri: ${paths.log_dir}/mlflow/mlruns # run `mlflow ui` command inside the `logs/mlflow/` dir to open the UI
+  #   tags: null
+  #   # save_dir: "./mlruns"
+  #   prefix: ""
+  #   artifact_location: null
+  #   # run_id: ""
+
+  # https://neptune.ai
+  #
+  # neptune:
+  #   _target_: lightning.pytorch.loggers.neptune.NeptuneLogger
+  #   api_key: ${oc.env:NEPTUNE_API_TOKEN} # api key is loaded from environment variable
+  #   project: username/lightning-hydra-template
+  #   # name: ""
+  #   log_model_checkpoints: True
+  #   prefix: ""
+
+paths:
+  # path to root directory
+  # this requires PROJECT_ROOT environment variable to exist
+  # you can replace it with "." if you want the root to be the current working directory
+  # tools/train.py and tools/eval.py set PROJECT_ROOT through rootutils.
+  root_dir: ${oc.env:PROJECT_ROOT}
+
+  # path to data directory
+  data_dir: ${paths.root_dir}/database/
+
+  # path to logging directory
+  log_dir: ${paths.root_dir}/work_dirs/
+
+  # path to output directory, created dynamically by hydra
+  # path generation pattern is specified in the `hydra` section below
+  # use it to store all files generated during the run, like ckpts and metrics
+  output_dir: ${hydra:runtime.output_dir}
+
+  # path to working directory
+  work_dir: ${hydra:runtime.cwd}
+
+extras:
+  # disable python warnings if they annoy you
+  ignore_warnings: False
+
+  # ask user for tags if none are provided in the config
+  enforce_tags: True
+
+  # pretty print config tree at the start of the run using Rich library
+  print_config: True
+
+hydra:
+  # https://hydra.cc/docs/configure_hydra/intro/
+  # output directory, generated dynamically on each run
+  run:
+    dir: ${paths.log_dir}/${task_name}/runs/${now:%Y-%m-%d}_${now:%H-%M-%S}
+  sweep:
+    dir: ${paths.log_dir}/${task_name}/multiruns/${now:%Y-%m-%d}_${now:%H-%M-%S}
+    subdir: ${hydra.job.num}
+  job_logging:
+    handlers:
+      file:
+        # Incorporates fix from https://github.com/facebookresearch/hydra/pull/2242
+        filename: ${hydra.runtime.output_dir}/${task_name}.log

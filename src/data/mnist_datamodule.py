@@ -54,7 +54,7 @@ class MNISTDataModule(LightningDataModule):
 
     def __init__(
         self,
-        data_dir: str = "data/",
+        data_dir: str = "database/",
         train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
         batch_size: int = 64,
         num_workers: int = 0,
@@ -62,7 +62,7 @@ class MNISTDataModule(LightningDataModule):
     ) -> None:
         """Initialize a `MNISTDataModule`.
 
-        :param data_dir: The data directory. Defaults to `"data/"`.
+        :param data_dir: The data directory. Defaults to `"database/"`.
         :param train_val_test_split: The train, validation and test split. Defaults to `(55_000, 5_000, 10_000)`.
         :param batch_size: The batch size. Defaults to `64`.
         :param num_workers: The number of workers. Defaults to `0`.

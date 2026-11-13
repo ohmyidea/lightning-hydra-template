@@ -25,6 +25,7 @@ hydra:
   # verbose: True
 
 trainer:
+  min_epochs: 1
   max_epochs: 1
   accelerator: cpu # debuggers don't like gpus
   devices: 1 # debuggers don't like multiprocessing

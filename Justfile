@@ -52,5 +52,5 @@ test-full:
     pytest
 
 # Train the model
-train:
-    python src/train.py
+train *args:
+    python tools/train.py {{args}}
