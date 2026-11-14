@@ -14,6 +14,8 @@ trainer:
   max_epochs: 200
   accelerator: gpu
   devices: 1
+  log_every_n_steps: 50
+  enable_model_summary: true # enable model summary
   check_val_every_n_epoch: 1 # perform a validation loop every N training epochs
   deterministic: false # set true to to ensure deterministic results
 
@@ -84,11 +86,16 @@ callbacks:
   # https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.RichModelSummary.html
   model_summary:
     _target_: lightning.pytorch.callbacks.RichModelSummary
-    max_depth: -1 # the maximum depth of layer nesting that the summary will include
+    max_depth: 1 # the maximum depth of layer nesting that the summary will include
 
-  # https://lightning.ai/docs/pytorch/latest/api/lightning.pytorch.callbacks.RichProgressBar.html
-  rich_progress_bar:
-    _target_: lightning.pytorch.callbacks.RichProgressBar
+  # # https://lightning.ai/docs/pytorch/latest/api/lightning.pytorch.callbacks.RichProgressBar.html
+  # rich_progress_bar:
+  #   _target_: lightning.pytorch.callbacks.RichProgressBar
+
+  progress_bar:
+    _target_: src.utils.progress.RankedProgressBar
+    refresh_rate: ${oc.select:trainer.log_every_n_steps,50}
+    rank_zero_only: true
 
 logger:
   # Uncomment optional logger blocks to enable them alongside TensorBoard.
@@ -236,3 +243,12 @@ hydra:
       file:
         # Incorporates fix from https://github.com/facebookresearch/hydra/pull/2242
         filename: ${hydra.runtime.output_dir}/${task_name}.log
+        encoding: utf-8
+    formatters:
+      simple:
+        format: '[%(asctime)s][%(levelname)s] - %(message)s'
+      colorlog:
+        format: '[%(cyan)s%(asctime)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(message)s'
+    loggers:
+      alembic.runtime.plugins:
+        level: WARNING

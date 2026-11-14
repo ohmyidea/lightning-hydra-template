@@ -27,12 +27,12 @@ clean:
 # Clean logs
 [windows]
 clean-logs:
-    Remove-Item -Recurse -Force logs\** -ErrorAction SilentlyContinue
+    Remove-Item -Recurse -Force work_dirs\** -ErrorAction SilentlyContinue
 
 # Clean logs
 [unix]
 clean-logs:
-    rm -rf logs/**
+    rm -rf work_dirs/**
 
 # Run pre-commit hooks
 format:

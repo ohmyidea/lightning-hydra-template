@@ -24,7 +24,7 @@ def cfg_train_global() -> DictConfig:
             cfg.trainer.min_epochs = 1
             cfg.trainer.max_epochs = 1
             cfg.trainer.enable_progress_bar = False
-            cfg.callbacks.rich_progress_bar = None
+            cfg.callbacks.progress_bar = None
             cfg.trainer.limit_train_batches = 0.01
             cfg.trainer.limit_val_batches = 0.1
             cfg.trainer.limit_test_batches = 0.1
